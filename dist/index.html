@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mew</title>
+  <style>
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #gl {
+      width: 1024px;
+      height: 1024px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Shader Test Harness</h1>
+  <div id="gl"></div>
+  <!--    <p id="fps"></p>-->
+  <video id="webcam" style="display:none;" autoplay></video>
+
+  <script type="module">
+    import { init } from '/scripts/myGLCanvas.mjs'
+
+    console.log("hi!")
+
+    init({
+      dimensions: {
+        width: 1024,
+        height: 1024
+      },
+      webcam: {
+        video_constraints: { facingMode: 'user' },
+        video_element_id: 'webcam',
+      },
+      renderer: {
+        container_element_id: 'gl'
+      },
+      local: {
+        A_index: '/assets/straight_faces_1/index.json',
+      }
+    }, "/testshader.json");
+  </script>
+</body>
+
+</html>

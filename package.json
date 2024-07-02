@@ -1,0 +1,10 @@
+{
+  "name": "MyGLCanvas",
+  "version": "0.0.01",
+  "dependencies": {
+    "three": "^0.165.0"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
