@@ -6,12 +6,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mew</title>
   <style>
-    body,
-    html {
-      margin: 0;
-      padding: 0;
-      justify-content: center;
-      align-items: center;
+    body {
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    /* Center text within block elements */
+    .block-element, 
+    canvas, 
+    img {
+        display: block;
+        margin: 0 auto;
     }
 
     #gl {
@@ -23,7 +31,7 @@
 
 <body>
   <h1>Shader Test Harness</h1>
-  <div id="gl"></div>
+  <div id="gl" class="block-element"></div>
   <!--    <p id="fps"></p>-->
   <video id="webcam" style="display:none;" autoplay></video>
 
