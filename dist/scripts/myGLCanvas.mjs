@@ -167,7 +167,6 @@ const init = async function (config, descriptor_url) {
           return [ [ e.uniform, { value: array_texture_details.texture } ], [ e.uniform + "_depth", { type: "i", value: array_texture_details.depth } ] ];
         case 'image':
           const image_texture_details = await load_image_texture(e.uri);
-          console.log(image_texture_details);
           return [ [ e.uniform, { value: image_texture_details.texture } ], [ e.uniform + "_corr", { type: "vec2", value: image_texture_details.corr } ] ];
         default:
           throw new Error(`Invalid texture type ${e.type}`);
