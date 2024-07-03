@@ -102,9 +102,18 @@ const load_2d_texture_array_from_index = async function (index_url, dims) {
   }
 }
 
+// const vertex_shader = `
+//   void main() {
+//       gl_Position = vec4( position, 1.0 );
+//   }
+// `;
+
 const vertex_shader = `
+  varying vec2 vUv;
+  
   void main() {
-      gl_Position = vec4( position, 1.0 );
+      vUv = uv;
+      gl_Position = vec4( position, 1.0 );    
   }
 `;
 
@@ -125,7 +134,7 @@ const renderer_init = function (config, uniforms) {
     fragmentShader: config.renderer.shader_code,
   });
   // end of paydirt
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2, 1, 1), material);
   scene.add(mesh);
 
   const renderer = new THREE.WebGLRenderer();
