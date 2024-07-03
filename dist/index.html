@@ -31,6 +31,14 @@
     import { init } from '/scripts/myGLCanvas.mjs'
 
     console.log("hi!")
+    const urlParams = new URLSearchParams(window.location.search);
+    console.log(urlParams)
+    let descriptor = urlParams.get('descriptor');
+
+    if (!descriptor) {
+      descriptor = "/testshader.json"
+      console.log("You can set a descriptor via ?descriptor=whatever.json... no descriptor set, so falling back on /testshader.json");
+    }
 
     init({
       dimensions: {
@@ -43,11 +51,8 @@
       },
       renderer: {
         container_element_id: 'gl'
-      },
-      local: {
-        A_index: '/assets/straight_faces_1/index.json',
       }
-    }, "/testshader.json");
+    }, descriptor);
   </script>
 </body>
 

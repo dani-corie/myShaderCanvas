@@ -34,7 +34,32 @@ const fetch_url = async function (url, type) {
     }
   }
   throw new Error(`Received HTTP ${response.status} while fetching ${url}`);
-}
+};
+
+const load_image = function (url) {
+  return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+      image.src = url;
+  });
+};
+
+const load_image_texture = async function(url) {
+  try{
+    const image = await load_image(url);
+    const w_corr = (image.naturalWidth > image.naturalHeight) ? 1.0 : image.naturalHeight / image.naturalWidth;
+    const h_corr = (image.naturalWidth > image.naturalHeight) ? image.naturalWidth / image.naturalHeight : 1.0;
+    const texture = new THREE.Texture(image);
+    texture.colorSpace = "srgb";
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.needsUpdate = true;
+    return { image, texture, corr: new THREE.Vector2(w_corr, h_corr) };
+  } catch (e) {
+    console.error("Encountered error while processing image:", e);
+  }
+};
 
 const load_2d_texture_array = async function (urls, dims) {
   const streams = urls.map(async (url) => {
@@ -138,10 +163,12 @@ const init = async function (config, descriptor_url) {
     const textures = (await Promise.all(descriptor.textures_index.map(async (e) => {
       switch (e.type) {
         case 'array':
-          const texture_data = await load_2d_texture_array_from_index(e.index_uri, config.dimensions);
-          return [ [ e.uniform, { value: texture_data.texture } ], [ e.uniform + "_depth", { type: "i", value: texture_data.depth } ] ];
+          const array_texture_details = await load_2d_texture_array_from_index(e.uri, config.dimensions);
+          return [ [ e.uniform, { value: array_texture_details.texture } ], [ e.uniform + "_depth", { type: "i", value: array_texture_details.depth } ] ];
         case 'image':
-          //fixme when i get around to it lololol, i know its basic but i don't need it atm
+          const image_texture_details = await load_image_texture(e.uri);
+          console.log(image_texture_details);
+          return [ [ e.uniform, { value: image_texture_details.texture } ], [ e.uniform + "_corr", { type: "vec2", value: image_texture_details.corr } ] ];
         default:
           throw new Error(`Invalid texture type ${e.type}`);
       }

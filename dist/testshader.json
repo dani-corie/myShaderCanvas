@@ -1,6 +1,7 @@
 {
   "shader_uri": "/scripts/testshader.glsl",
   "textures_index": [
-    { "type": "array", "uniform": "u_imgs", "index_uri": "/assets/buku/index.json" }
+    { "type": "array", "uniform": "u_array", "uri": "/buku/index.json" },
+    { "type": "image", "uniform": "u_img", "uri": "/buku/buku.png" }
   ]
 }
