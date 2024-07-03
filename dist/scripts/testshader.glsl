@@ -1,7 +1,3 @@
-precision highp sampler2DArray;
-precision highp sampler2D;
-precision mediump float;
-
 uniform sampler2D u_cam;
 uniform sampler2DArray u_array;
 uniform int u_array_depth;

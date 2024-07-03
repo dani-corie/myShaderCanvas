@@ -1,5 +1,7 @@
 import * as THREE from '/scripts/three.module.js';
 
+let baseuri = window.location.origin;
+
 const cam_init = async function (config) {
   const video = document.getElementById(config.webcam.video_element_id);
   try {
@@ -24,7 +26,7 @@ const cam_init = async function (config) {
 };
 
 const fetch_url = async function (url, type) {
-  const response = await fetch(url);
+  const response = await fetch(new URL(url, baseuri));
   if (response.ok) {
     switch (type) {
       case 'text': return response.text();
@@ -41,7 +43,7 @@ const load_image = function (url) {
       const image = new Image();
       image.onload = () => resolve(image);
       image.onerror = () => reject(new Error(`Failed to load image: ${url}`));
-      image.src = url;
+      image.src = new URL(url, baseuri);
   });
 };
 
@@ -162,9 +164,11 @@ const renderer_init = function (config, uniforms) {
   window.requestAnimationFrame(tick);
 };
 
-const init = async function (config, descriptor_url) {
+const init = async function (config, descriptor_uri) {
   try {
-    const descriptor = await fetch_url(descriptor_url, 'json');
+    const descriptor = await fetch_url(descriptor_uri, 'json');
+    baseuri = new URL(descriptor_uri, baseuri);
+
     console.log("...retrieving shader code...");
     config.renderer.shader_code = await fetch_url(descriptor.shader_uri, 'text');
     console.log("...retrieving texture files...");
