@@ -194,8 +194,7 @@ const init = async function (config, descriptor_uri) {
     try {
       console.log("...resolving shader includes via lygia.xyz...")
       const resolveLygia = (await import("https://lygia.xyz/resolve.esm.js")).default;
-      const tmp = resolveLygia(shader_code);
-      config.renderer.shader_code = await tmp;
+      config.renderer.shader_code = await resolveLygia(shader_code);
     } catch (e) {
       console.error("Could not resolve lygia.xyz includes:", e)
       config.renderer.shader_code = shader_code;
