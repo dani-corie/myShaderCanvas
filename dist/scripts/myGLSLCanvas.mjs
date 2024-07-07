@@ -1,6 +1,35 @@
 import * as THREE from '/scripts/three.module.js';
+import resolveLygiaAsync from "https://lygia.xyz/resolve.esm.js"
 
-let baseuri = window.location.origin;
+class Loader {
+  constructor(baseuri = null) {
+    if (baseuri)
+      this.baseuri = new URL(baseuri, window.location.origin);
+    else
+      this.baseuri = window.location.origin;
+  }
+
+  async load(url, type) {
+    const response = await fetch(this.transform_url(url));
+    if (response.ok) {
+      switch (type) {
+        case 'text': return response.text();
+        case 'json': return response.json();
+        case 'blob': return response.blob();
+        default: throw new Error(`Error while fetching ${url}: unhandled type '${type}'`);
+      }
+    }
+    throw new Error(`Received HTTP ${response.status} while fetching ${url}`);
+  }
+
+  cd(relative_path) {
+    return new Loader(new URL(relative_path, this.baseuri));
+  }
+
+  transform_url(url) {
+    return new URL(url, this.baseuri);
+  }
+}
 
 const cam_init = async function (config) {
   const video = document.getElementById(config.webcam.video_element_id);
@@ -25,31 +54,19 @@ const cam_init = async function (config) {
   }
 };
 
-const fetch_url = async function (url, type) {
-  const response = await fetch(new URL(url, baseuri));
-  if (response.ok) {
-    switch (type) {
-      case 'text': return response.text();
-      case 'json': return response.json();
-      case 'blob': return response.blob();
-      default: throw new Error(`Error while fetching ${url}: unhandled type '${type}'`);
-    }
-  }
-  throw new Error(`Received HTTP ${response.status} while fetching ${url}`);
-};
-
-const load_image = function (url) {
+const load_image = function (url, loader) {
   return new Promise((resolve, reject) => {
+      const full_url = loader.transform_url(url);
       const image = new Image();
       image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error(`Failed to load image: ${url}`));
-      image.src = new URL(url, baseuri);
+      image.onerror = () => reject(new Error(`Failed to load image: ${full_url}`));
+      image.src = full_url;
   });
 };
 
-const load_image_texture = async function(url) {
+const load_image_texture = async function(url, loader) {
   try{
-    const image = await load_image(url);
+    const image = await load_image(url, loader);
     const w_corr = (image.naturalWidth > image.naturalHeight) ? 1.0 : image.naturalHeight / image.naturalWidth;
     const h_corr = (image.naturalWidth > image.naturalHeight) ? image.naturalWidth / image.naturalHeight : 1.0;
     const texture = new THREE.Texture(image);
@@ -63,9 +80,9 @@ const load_image_texture = async function(url) {
   }
 };
 
-const load_2d_texture_array = async function (urls, dims) {
+const load_2d_texture_array = async function (urls, dims, loader) {
   const streams = urls.map(async (url) => {
-    const blob = await fetch_url(url, 'blob');
+    const blob = await loader.load(url, 'blob');
     return createImageBitmap(blob, { imageOrientation: "flipY" });
   });
   try {
@@ -95,10 +112,12 @@ const load_2d_texture_array = async function (urls, dims) {
   }
 }
 
-const load_2d_texture_array_from_index = async function (index_url, dims) {
+const load_2d_texture_array_from_index = async function (index_url, dims, loader) {
   try {
-    const index = await fetch_url(index_url, 'json');
-    return load_2d_texture_array(index, dims);
+    console.log(loader);
+    const index = await loader.load(index_url, 'json');
+    const subloader = loader.cd(index_url);
+    return load_2d_texture_array(index, dims, subloader);
   } catch (e) {
     console.error("Encountered an error while retrieving image index:", e);
   }
@@ -166,34 +185,59 @@ const renderer_init = function (config, uniforms) {
 
 const init = async function (config, descriptor_uri) {
   try {
-    const descriptor = await fetch_url(descriptor_uri, 'json');
-    baseuri = new URL(descriptor_uri, baseuri);
+    let loader = new Loader();
+    const descriptor = await loader.load(descriptor_uri, 'json');
+    loader = loader.cd(descriptor_uri);
 
     console.log("...retrieving shader code...");
-    config.renderer.shader_code = await fetch_url(descriptor.shader_uri, 'text');
-    console.log("...retrieving texture files...");
-    
-    const textures = (await Promise.all(descriptor.textures_index.map(async (e) => {
-      switch (e.type) {
-        case 'array':
-          const array_texture_details = await load_2d_texture_array_from_index(e.uri, config.dimensions);
-          return [ [ e.uniform, { value: array_texture_details.texture } ], [ e.uniform + "_depth", { type: "i", value: array_texture_details.depth } ] ];
-        case 'image':
-          const image_texture_details = await load_image_texture(e.uri);
-          return [ [ e.uniform, { value: image_texture_details.texture } ], [ e.uniform + "_corr", { type: "vec2", value: image_texture_details.corr } ] ];
-        default:
-          throw new Error(`Invalid texture type ${e.type}`);
-      }
-    }))).flat();
+    const shader_code = await loader.load(descriptor.shader_uri, 'text');
 
-    const textures_map = Object.fromEntries(textures);
-    console.log("...activating webcam...");
-    const cam = await cam_init(config);
-    console.log("...starting renderer...");
-    renderer_init(config, {
-      u_cam: { value: cam.texture },
+    try {
+      console.log("...resolving shader includes via lygia.xyz...")
+      config.renderer.shader_code = await resolveLygiaAsync(shader_code);
+    } catch (e) {
+      console.error("Could not resolve lygia.xyz includes:", e)
+      config.renderer.shader_code = shader_code;
+    }
+
+    let textures_map = {};
+    if (descriptor.textures_index) {
+      console.log("...retrieving texture files...");
+      const textures = (await Promise.all(descriptor.textures_index.map(async (e) => {
+        switch (e.type) {
+          case 'array':
+            const array_texture_details = await load_2d_texture_array_from_index(e.uri, config.dimensions, loader);
+            return [ [ e.uniform, { value: array_texture_details.texture } ], [ e.uniform + "_depth", { type: "i", value: array_texture_details.depth } ] ];
+          case 'image':
+            const image_texture_details = await load_image_texture(e.uri, loader);
+            return [ [ e.uniform, { value: image_texture_details.texture } ], [ e.uniform + "_corr", { type: "vec2", value: image_texture_details.corr } ] ];
+          default:
+            throw new Error(`Invalid texture type ${e.type}`);
+        }
+      }))).flat();
+
+      textures_map = Object.fromEntries(textures);
+    }
+
+    let builtins = {};
+    try {
+      if (descriptor.webcam) {
+        console.log("...activating webcam...");
+        const cam = await cam_init(config);
+        builtins["u_cam"] = { value: cam.texture };
+      }
+    } catch (e) {
+      console.log("Error while initializing webcam:", e);
+      builtins["u_cam"] = { value: null };
+    }
+
+    const uniforms = {
+      ...builtins,
       ...textures_map
-    });
+    };
+
+    console.log("...starting renderer...");
+    renderer_init(config, uniforms);
   } catch (e) {
     console.log("Encountered an error while initializing shader:", e);
   }

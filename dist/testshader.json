@@ -1,5 +1,6 @@
 {
   "shader_uri": "/scripts/testshader.glsl",
+  "webcam": true,
   "textures_index": [
     { "type": "array", "uniform": "u_array", "uri": "/buku/index.json" },
     { "type": "image", "uniform": "u_img", "uri": "/buku/buku.png" }

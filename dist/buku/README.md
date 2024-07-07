@@ -1,0 +1,1 @@
+Quotes from *Kazohinia* (*Vojaĝo al Kazohinio*) by Sándor Szathmári (c) 1941, 1958
