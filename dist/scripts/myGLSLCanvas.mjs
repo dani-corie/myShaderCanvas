@@ -1,5 +1,4 @@
 import * as THREE from '/scripts/three.module.js';
-import resolveLygiaAsync from "https://lygia.xyz/resolve.esm.js"
 
 class Loader {
   constructor(baseuri = null) {
@@ -194,7 +193,9 @@ const init = async function (config, descriptor_uri) {
 
     try {
       console.log("...resolving shader includes via lygia.xyz...")
-      config.renderer.shader_code = await resolveLygiaAsync(shader_code);
+      const resolveLygia = (await import("https://lygia.xyz/resolve.esm.js")).default;
+      const tmp = resolveLygia(shader_code);
+      config.renderer.shader_code = await tmp;
     } catch (e) {
       console.error("Could not resolve lygia.xyz includes:", e)
       config.renderer.shader_code = shader_code;
