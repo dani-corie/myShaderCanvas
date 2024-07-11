@@ -1,7 +1,8 @@
 <?php
 
-$directory = isset($_GET['dir']) ? $_GET['dir'] : '';
+$directory = isset($_GET['dir']) ? urldecode($_GET['dir']) : '';
 $directory = $_SERVER['DOCUMENT_ROOT'] . '/' . $directory;
+error_log($directory);
 
 if (is_dir($directory) && is_readable($directory)) {
     $files = scandir($directory);
