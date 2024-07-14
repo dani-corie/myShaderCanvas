@@ -36,15 +36,14 @@
   <video id="webcam" style="display:none;" autoplay></video>
 
   <script type="module">
-    import { init } from '/scripts/myGLSLCanvas.mjs'
+    import { init } from './scripts/myGLSLCanvas.mjs'
 
     console.log("hi!")
     const urlParams = new URLSearchParams(window.location.search);
-    console.log(urlParams)
     let descriptor = urlParams.get('descriptor');
 
     if (!descriptor) {
-      descriptor = "/testshader.json"
+      descriptor = "testshader.json";
       console.log("You can set a descriptor via ?descriptor=whatever.json... no descriptor set, so falling back on /testshader.json");
     }
 

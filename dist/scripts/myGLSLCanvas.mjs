@@ -1,4 +1,4 @@
-import * as THREE from '/scripts/three.module.js';
+import * as THREE from './three.module.js';
 
 class Loader {
   constructor(baseuri = null) {
@@ -185,6 +185,7 @@ const renderer_init = function (config, uniforms) {
 const init = async function (config, descriptor_uri) {
   try {
     let loader = new Loader();
+    console.log(`...retrieving descriptor file ${descriptor_uri}...`);
     const descriptor = await loader.load(descriptor_uri, 'json');
     loader = loader.cd(descriptor_uri);
 
@@ -196,7 +197,7 @@ const init = async function (config, descriptor_uri) {
       const resolveLygia = (await import("https://lygia.xyz/resolve.esm.js")).default;
       config.renderer.shader_code = await resolveLygia(shader_code);
     } catch (e) {
-      console.error("Could not resolve lygia.xyz includes:", e)
+      console.error("Error while resolving lygia.xyz includes:", e)
       config.renderer.shader_code = shader_code;
     }
 
