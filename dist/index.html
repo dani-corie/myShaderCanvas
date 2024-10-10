@@ -19,7 +19,7 @@
     canvas, 
     img {
         display: block;
-        margin: 0 auto;
+        margin: auto auto;
     }
 
     #gl {
@@ -38,13 +38,21 @@
   <script type="module">
     import { init } from './scripts/myGLSLCanvas.mjs'
 
-    console.log("hi!")
+    console.log("hi!");
     const urlParams = new URLSearchParams(window.location.search);
     let descriptor = urlParams.get('descriptor');
 
     if (!descriptor) {
       descriptor = "testshader.json";
       console.log("You can set a descriptor via ?descriptor=whatever.json... no descriptor set, so falling back on /testshader.json");
+    }
+
+    const control_uniforms = {
+      'u_control': { type: 'fv', value: 0. }
+    }
+
+    const control_update = function(uniforms, time, _) {
+      uniforms.u_control.value = [ Math.max(Math.min(Math.sin(time), 1.), 0.), time % 1 ]
     }
 
     init({
@@ -59,7 +67,7 @@
       renderer: {
         container_element_id: 'gl'
       }
-    }, descriptor);
+    }, descriptor, control_uniforms, control_update);
   </script>
 </body>
 

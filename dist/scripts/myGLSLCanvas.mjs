@@ -137,7 +137,7 @@ const vertex_shader = `
   }
 `;
 
-const renderer_init = function (config, uniforms) {
+const renderer_init = function (config, uniforms, control_logic) {
   const scene = new THREE.Scene();
   const camera = new THREE.Camera();
   camera.position.z = 1;
@@ -172,8 +172,10 @@ const renderer_init = function (config, uniforms) {
   const clock = new THREE.Clock();
   const tick = function () {
     const delta = clock.getDelta();
+    const time = clock.elapsedTime;
     shader_uniforms.u_delta.value = delta;
-    shader_uniforms.u_time.value = clock.elapsedTime;
+    shader_uniforms.u_time.value = time;
+    control_logic(shader_uniforms, time, delta)
     renderer.render(scene, camera);
     //                fps_field.textContent = 1./delta;
     window.requestAnimationFrame(tick)
@@ -182,7 +184,7 @@ const renderer_init = function (config, uniforms) {
   window.requestAnimationFrame(tick);
 };
 
-const init = async function (config, descriptor_uri) {
+const init = async function (config, descriptor_uri, control_uniforms={}, control_logic=(uniforms, time, delta) => (null)) {
   try {
     let loader = new Loader();
     console.log(`...retrieving descriptor file ${descriptor_uri}...`);
@@ -236,11 +238,12 @@ const init = async function (config, descriptor_uri) {
 
     const uniforms = {
       ...builtins,
+      ...control_uniforms,
       ...textures_map
     };
 
     console.log("...starting renderer...");
-    renderer_init(config, uniforms);
+    renderer_init(config, uniforms, control_logic);
   } catch (e) {
     console.log("Encountered an error while initializing shader:", e);
   }

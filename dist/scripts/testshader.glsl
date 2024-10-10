@@ -7,6 +7,7 @@ uniform vec2 u_img_corr;
 uniform vec2 u_resolution;
 uniform float u_time;
 uniform float u_delta;
+uniform float u_control[25];
 
 varying vec2 vUv;
 
@@ -17,6 +18,6 @@ vec4 mirror(sampler2D img, vec2 uv) {
 void main() {
   vec2 st = vUv;
   vec4 color = (mirror(u_cam, st) + texture(u_array, vec3(st, int(u_time) % u_array_depth))) / 2.;
-  color.r += clamp(sin(u_time), 0., 1.) * texture(u_img, fract(u_time + st * u_img_corr * 3.)).r;
+  color.r += u_control[0] * texture(u_img, fract(u_time + st * u_img_corr * 3.)).r;
   gl_FragColor = color;
 }
